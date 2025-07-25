@@ -1,0 +1,350 @@
+html {
+  scrollbar-gutter: stable both-edges;
+}
+
+  body {
+    background-color: #f8f9fa;
+  }
+
+  .dashboard-illustration {
+    display: none;
+  }
+
+/* ───── SIDEBAR ───── */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: #2B2D42; /* dark indigo */
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  color: white;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar h4 {
+  padding: 1rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.3s, width 0.3s;
+}
+
+/* Section dividers and labels */
+.sidebar-section {
+  position: relative;
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem 0.25rem;
+}
+
+.sidebar-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  right: 1rem;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.section-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.3s, width 0.3s;
+  display: inline-block;
+}
+
+/* Sidebar links and buttons */
+.sidebar a,
+.sidebar button.accordion-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem 1rem;
+  color: #dee2e6;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.sidebar a:hover,
+.sidebar button:hover {
+  background-color: #1D1E33;
+  color: #ffffff;
+}
+
+/* Accordion */
+.accordion-button::after {
+  filter: invert(1);
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #38415A;
+  color: #ffffff;
+}
+
+/* Sidebar text */
+.link-text {
+  transition: opacity 0.3s, width 0.3s;
+  white-space: nowrap;
+  opacity: 1;
+  width: auto;
+  overflow: visible;
+}
+
+/* ───── PROFILE FOOTER ───── */
+.sidebar-profile {
+  margin-top: auto;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.sidebar-profile img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* ───── MAIN CONTENT ───── */
+.main-content {
+  margin-left: 250px;
+  padding: 2rem;
+  transition: margin-left 0.3s;
+}
+
+/* ───── RESPONSIVE COLLAPSE ───── */
+@media (max-width: 991.98px) {
+  .sidebar {
+    width: 70px;
+  }
+
+  .main-content {
+    margin-left: 70px;
+  }
+
+  .sidebar h4,
+  .sidebar .link-text,
+  .sidebar .section-label {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+  }
+
+  .sidebar:hover {
+    width: 250px;
+  }
+
+  .sidebar:hover ~ .main-content {
+    margin-left: 250px;
+  }
+
+  .sidebar:hover h4,
+  .sidebar:hover .link-text,
+  .sidebar:hover .section-label {
+    opacity: 1;
+    width: auto;
+    overflow: visible;
+  }
+
+  .sidebar .sidebar-section::before {
+    opacity: 1;
+  }
+}
+html {
+  scrollbar-gutter: stable;
+}
+
+  body {
+    background-color: #f8f9fa;
+  }
+
+  .dashboard-illustration {
+    display: none;
+  }
+
+/* ───── SIDEBAR ───── */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: #2B2D42; /* dark indigo */
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  color: white;
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar h4 {
+  padding: 1rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.3s, width 0.3s;
+}
+
+/* Section dividers and labels */
+.sidebar-section {
+  position: relative;
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem 0.25rem;
+}
+
+.sidebar-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  right: 1rem;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.section-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.3s, width 0.3s;
+  display: inline-block;
+}
+
+/* Sidebar links and buttons */
+.sidebar a,
+.sidebar button.accordion-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem 1rem;
+  color: #dee2e6;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.sidebar a:hover,
+.sidebar button:hover {
+  background-color: #1D1E33;
+  color: #ffffff;
+}
+
+/* Accordion */
+.accordion-button::after {
+  filter: invert(1);
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #38415A;
+  color: #ffffff;
+}
+
+/* Sidebar text */
+.link-text {
+  transition: opacity 0.3s, width 0.3s;
+  white-space: nowrap;
+  opacity: 1;
+  width: auto;
+  overflow: visible;
+}
+
+/* ───── PROFILE FOOTER ───── */
+.sidebar-profile {
+  margin-top: auto;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.sidebar-profile img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* ───── MAIN CONTENT ───── */
+.main-content {
+  margin-left: 250px;
+  padding: 2rem;
+  transition: margin-left 0.3s;
+}
+
+/* ───── RESPONSIVE COLLAPSE ───── */
+@media (max-width: 991.98px) {
+  .sidebar {
+    width: 70px;
+  }
+
+  .main-content {
+    margin-left: 70px;
+  }
+
+  .sidebar h4,
+  .sidebar .link-text,
+  .sidebar .section-label {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+  }
+
+  .sidebar:hover {
+    width: 250px;
+  }
+
+  .sidebar:hover ~ .main-content {
+    margin-left: 250px;
+  }
+
+  .sidebar:hover h4,
+  .sidebar:hover .link-text,
+  .sidebar:hover .section-label {
+    opacity: 1;
+    width: auto;
+    overflow: visible;
+  }
+
+  .sidebar .sidebar-section::before {
+    opacity: 1;
+  }
+}

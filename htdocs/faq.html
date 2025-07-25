@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marina Heights - FAQ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Times New Roman", Times, serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* Navbar Styles */
+        .navbar {
+            background-color: #003366;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-buttons button.nav-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 5px 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            position: relative;
+        }
+
+        .nav-buttons button.nav-btn:hover {
+            transform: scale(1.15);
+            text-decoration: none;
+        }
+
+        .nav-buttons button.nav-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav-buttons button.nav-btn:hover::after {
+            width: 100%;
+        }
+
+        .nav-buttons button.nav-btn.active-tab {
+            transform: scale(1.1);
+        }
+
+        .nav-buttons button.nav-btn.active-tab::after {
+            width: 100%;
+        }
+        .navbar img.logo {
+            height: 40px;
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 2px solid white;
+            padding: 2px;
+        }
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .nav-buttons a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-buttons a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-buttons a.current-page {
+            background-color: #0059b3;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 100px auto 40px;
+            padding: 0 20px;
+        }
+        
+        .home-btn {
+           color: white;
+           font-weight: bold;
+           text-decoration: none;
+           padding: 8px 15px;
+           border-radius: 4px;
+           transition: all 0.3s ease;
+        }
+
+       .home-btn:hover {
+           transform: scale(1.1);
+           text-decoration: none;
+        }
+        
+        h1 {
+            color: #003366;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            position: relative;
+        }
+        
+        h1::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(to right, #003366, #91eae4);
+            margin: 15px auto 0;
+            border-radius: 2px;
+        }
+        
+        h2.category-title {
+            color: #003366;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e6ed;
+            font-size: 1.8rem;
+        }
+
+        .faq-container {
+            margin-bottom: 50px;
+        }
+        
+        .faq-item {
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .faq-question {
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: #003366;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-question:hover {
+            background-color: #f8fafc;
+        }
+        
+        .faq-question::after {
+            content: '+';
+            font-size: 1.5rem;
+            color: #003366;
+            transition: all 0.3s ease;
+        }
+        
+        .faq-question.active::after {
+            content: '-';
+            transform: rotate(0deg);
+        }
+        
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 20px;
+            transition: all 0.5s ease;
+            background-color: #f8fafc;
+            border-top: 1px solid #e0e6ed;
+        }
+        
+        .faq-answer.active {
+            max-height: 500px;
+            padding: 20px;
+        }
+        
+        .faq-answer p {
+            margin-bottom: 15px;
+        }
+        
+        .faq-answer p:last-child {
+            margin-bottom: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .faq-container {
+            animation: fadeIn 0.6s ease forwards;
+        }
+        
+        .category-title {
+            animation: fadeIn 0.6s ease forwards 0.2s;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        
+        .faq-item {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 80px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .faq-question {
+                padding: 15px;
+                font-size: 1rem;
+            }
+            
+            .nav-buttons {
+                gap: 10px;
+            }
+            
+            .nav-buttons a {
+                padding: 6px 8px;
+                font-size: 0.9rem;
+            }
+        }
+        /* Logo Popup Styles */
+        .logo-hover {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            transform-origin: center;
+        }
+
+        .logo-hover:hover {
+            transform: scale(1.2);
+        }
+        .logo-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .logo-popup.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .logo-popup-content {
+            position: relative;
+            padding: 20px;
+            max-width: 80%;
+            max-height: 80%;
+            text-align: center;
+        }
+
+       .logo-large {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .close-logo {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #003366;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-logo:hover {
+            background: #004080;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="#" onclick="showLogoPopup(); return false;" class="logo-hover"><img src="Image/logo.png" alt="Marina Heights Logo" class="logo"></a>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="scrollToSection('general-questions')">General Questions</button>
+            <button class="nav-btn" onclick="scrollToSection('visitor-information')">Visitor Information</button>
+            <button class="nav-btn" onclick="scrollToSection('resident-services')">Resident Services</button>
+            <button class="nav-btn" onclick="scrollToSection('safety-security')">Safety & Security</button>
+            <button class="nav-btn" onclick="scrollToSection('payment-fees')">Payment & Fees</button>
+        </div>
+        <a href="index.php" class="home-btn"><i class="bi bi-house"></i>&nbsp;&nbsp;Home</a>
+    </div>
+    <div id="logo-popup" class="logo-popup">
+        <div class="logo-popup-content">
+            <span class="close-logo" onclick="closeLogoPopup()">&times;</span>
+            <img src="Image/logo.png" alt="Marina Heights Logo" class="logo-large">
+        </div>
+    </div>
+    <div class="container">
+        <h1>Frequently Asked Questions</h1>
+        <div class="faq-container">
+          <div id="general-questions" class="faq-container">
+            <h2 class="category-title">General Questions</h2>
+          </div>
+            
+            <div class="faq-item" style="animation-delay: 0.3s">
+                <div class="faq-question">1. Where is Marina Heights located?</div>
+                <div class="faq-answer">
+                    <p>Marina Heights is located near the coast, just a short walk from the LRT station and close to major shopping centres.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.4s">
+                <div class="faq-question">2. What type of units are available at Marina Heights?</div>
+                <div class="faq-answer">
+                    <p>We offer a range of unit types including 1-bedroom, 2-bedroom, and 3-bedroom units with sea or city views.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.5s">
+                <div class="faq-question">3. How can I schedule a tour or viewing of a unit?</div>
+                <div class="faq-answer">
+                    <p>You can book a tour through our website's Meet Our Agent section and click "Contact Agent" or call our management office during working hours.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.6s">
+                <div class="faq-question">4. Is Marina Heights a freehold or leasehold property?</div>
+                <div class="faq-answer">
+                    <p>Marina Heights is a freehold based condominium.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-container">
+          <div id="visitor-information" class="faq-container">
+            <h2 class="category-title">Visitor Information</h2>
+          </div>
+            
+            <div class="faq-item" style="animation-delay: 0.3s">
+                <div class="faq-question">5. Are visitors allowed to use the condo facilities?</div>
+                <div class="faq-answer">
+                    <p>Facilities such as the pool and gym are reserved for residents. Visitors may use certain amenities only if accompanied by a resident.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.4s">
+                <div class="faq-question">6. Is visitor parking available?</div>
+                <div class="faq-answer">
+                    <p>Yes, designated visitor parking bays are available. All visitors must register when applying a visit pass.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.5s">
+                <div class="faq-question">7. How do I apply a visit pass?</div>
+                <div class="faq-answer">
+                    <p>At the home page, click "Apply for Visit Pass", then fill in your details.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.6s">
+                <div class="faq-question">8. Can visitors book the facilities?</div>
+                <div class="faq-answer">
+                    <p>Only Multipurpose hall is allowed to be booked by visitors. Kindly contact our management office during office hours for more details.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-container">
+          <div id="resident-services" class="faq-container">
+            <h2 class="category-title">Resident Services</h2>
+          </div>
+            
+            <div class="faq-item" style="animation-delay: 0.3s">
+                <div class="faq-question">9. How do I book condo facilities like the BBQ pit or multi-purpose hall?</div>
+                <div class="faq-answer">
+                    <p>Bookings can be made through the Resident Portal or by visiting the management office. Some facilities may require a deposit and/or fees.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.4s">
+                <div class="faq-question">10. Who do I contact for maintenance issues in my unit?</div>
+                <div class="faq-answer">
+                    <p>Please submit a report via the Resident Portal or call our management office during office hours.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.5s">
+                <div class="faq-question">11. How can I update my contact details or car plate number?</div>
+                <div class="faq-answer">
+                    <p>You can update your details through the Resident Portal or by submitting a form at the management office.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.6s">
+                <div class="faq-question">12. Is there a recycling or waste management schedule?</div>
+                <div class="faq-answer">
+                    <p>Yes, recycling bins are available at every floor. General waste is collected daily and recyclables every Tuesday and Friday.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-container">
+          <div id="safety-security" class="faq-container">
+            <h2 class="category-title">Safety & Security</h2>
+          </div>
+            
+            <div class="faq-item" style="animation-delay: 0.3s">
+                <div class="faq-question">13. Are there CCTV cameras in common areas?</div>
+                <div class="faq-answer">
+                    <p>Yes, CCTV is installed throughout key common areas for your safety.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.4s">
+                <div class="faq-question">14. What should I do in case of an emergency?</div>
+                <div class="faq-answer">
+                    <p>Call the emergency number listed in the Resident Handbook or notify the security guardhouse immediately.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.5s">
+                <div class="faq-question">15. Are deliveries allowed to be sent directly to units?</div>
+                <div class="faq-answer">
+                    <p>For security, deliveries are accepted at the guardhouse or lobby and must be collected by the resident.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="faq-container">
+          <div id="payment-fees" class="faq-container">
+            <h2 class="category-title">Payment & Fees</h2>
+          </div>
+            
+            <div class="faq-item" style="animation-delay: 0.3s">
+                <div class="faq-question">16. How do I pay my maintenance fees?</div>
+                <div class="faq-answer">
+                    <p>Fees can be paid online via the Resident Portal or at the management office. E-receipts are issued for every payment.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item" style="animation-delay: 0.4s">
+                <div class="faq-question">17. Are there penalties for late payment of maintenance fees?</div>
+                <div class="faq-answer">
+                    <p>Yes, a late fee is charged as per the MC's rules and regulations. Please refer to the Resident Handbook page for details.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const answer = question.nextElementSibling;
+                const isActive = question.classList.contains('active');
+
+                document.querySelectorAll('.faq-question').forEach(q => {
+                    if (q !== question) {
+                        q.classList.remove('active');
+                        q.nextElementSibling.classList.remove('active');
+                    }
+                });
+
+                question.classList.toggle('active');
+                answer.classList.toggle('active');
+                
+                if (!isActive) {
+                    setTimeout(() => {
+                        question.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach((item, index) => {
+                item.style.animationDelay = `${0.3 + (index * 0.1)}s`;
+            });
+        });
+        function scrollToSection(sectionId) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            // Calculate position accounting for fixed navbar
+            const yOffset = -80; 
+            const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        
+            window.scrollTo({
+                top: y,
+                behavior: 'smooth'
+            });
+        }
+        }
+        // Add these functions to your existing script section
+        function showLogoPopup() {
+            const popup = document.getElementById("logo-popup");
+            popup.style.display = "flex";
+            setTimeout(() => {
+                popup.classList.add("show");
+            }, 10);
+        }
+
+        function closeLogoPopup() {
+            const popup = document.getElementById("logo-popup");
+            popup.classList.remove("show");
+            setTimeout(() => {
+                popup.style.display = "none";
+            }, 300);
+        }
+ 
+        // Close when clicking outside the logo
+        document.addEventListener("click", function(e) {
+            const popup = document.getElementById("logo-popup");
+           if (popup.classList.contains("show") && 
+               !e.target.closest(".logo-popup-content") && 
+                e.target !== document.querySelector(".navbar .logo")) {
+                closeLogoPopup();
+        }
+        });
+     </script>
+</body>
+</html>

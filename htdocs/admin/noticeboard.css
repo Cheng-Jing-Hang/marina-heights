@@ -1,0 +1,15 @@
+.form-control:focus {
+  border-color: #5710B2;
+  box-shadow: 0 0 0 0.2rem rgba(87,16,178,0.15);
+}
+
+.btn-primary {
+  background-color: #5710B2;
+  border: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  background-color: #4710a5;
+  transform: scale(1.03);
+}

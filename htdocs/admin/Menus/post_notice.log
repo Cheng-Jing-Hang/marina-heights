@@ -1,0 +1,15 @@
+=== POST NOTICE STARTED ===
+Time: 2025-07-20 02:49:47
+POST Data:
+ - title: a
+ - content: aaa
+
+Connecting to database...
+Database connected successfully
+
+Title: a
+Content: aaa
+Preparing SQL statement...
+Binding parameters...
+Executing query...
+Insert SUCCESSFUL! ID: 4
