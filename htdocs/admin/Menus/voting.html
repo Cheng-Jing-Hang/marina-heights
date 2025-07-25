@@ -1,0 +1,542 @@
+<div class="container-fluid py-4">
+    <!-- Page Heading -->
+    <h2 class="mb-4 fw-bold text-primary">
+        <i class="bi bi-ballot-check me-2"></i> Voting Dashboard
+    </h2>
+
+    <!-- Active/Past Votes Section -->
+    <h5 class="text-muted mb-3">Active &amp; Past Votes</h5>
+
+    <!-- Votes will be loaded here dynamically -->
+    <div id="votes-container">
+        <!-- Loading card initially, will be replaced by real data -->
+        <div class="card shadow-sm border-0 mb-4 rounded-4" id="loading-card">
+            <div class="card-body text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading votes...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Vote Form (Admin-only section) -->
+    <div class="card shadow-sm border-0 rounded-4 mt-5" id="admin-create-vote-section" style="display: none;">
+        <div class="card-body">
+            <h5 class="mb-3 text-primary">
+                <i class="bi bi-plus-circle me-2"></i> Create New Vote
+            </h5>
+            <form id="voteForm" method="POST">
+                <div class="mb-3">
+                    <label for="voteTitle" class="form-label fw-semibold">Vote Question / Title</label>
+                    <input type="text" id="voteTitle" name="title" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="voteDescription" class="form-label fw-semibold">Description (optional)</label>
+                    <textarea id="voteDescription" name="description" rows="4" class="form-control"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Options</label>
+                    <div id="options-container">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-10">
+                                <input type="text" id="optionInput1" name="option[]" class="form-control" value="Yes" required aria-label="Option 1">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-10">
+                                <input type="text" id="optionInput2" name="option[]" class="form-control" value="No" required aria-label="Option 2">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" id="add-option" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="bi bi-plus"></i> Add Option
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <label for="voteDeadline" class="form-label fw-semibold">Voting Deadline</label>
+                    <input type="datetime-local" id="voteDeadline" name="deadline" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                    <i class="bi bi-send-fill me-1"></i> Publish Vote
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin View Toggle (for demonstration purposes only) -->
+    <div class="mt-5 text-center">
+        <button type="button" id="toggle-admin-view" class="btn btn-sm btn-outline-secondary">
+            Toggle Admin View (Demo)
+        </button>
+        <p class="text-muted mt-2 text-sm">This button is for demonstration only. In a real app, user roles are managed server-side.</p>
+    </div>
+</div>
+
+<script>
+    console.log("voting.html partial script loaded and ready for initialization.");
+    
+    // Global functions (window.showNotification, window.showConfirmModal) are provided by resident_dashboard.html
+    // We assume they are available in the parent window.
+
+    // --- User ID and Voted Polls Management (Client-side simulation) ---
+    // In a real application, userId would come from a secure authentication system (e.g., PHP session).
+    // Voted poll IDs would be stored server-side, linked to the user.
+    let currentUserId = localStorage.getItem('currentUserId');
+    if (!currentUserId) {
+        currentUserId = 'user_' + Math.random().toString(36).substring(2, 15); // Simple unique ID for demo
+        localStorage.setItem('currentUserId', currentUserId);
+    }
+    console.log(`Current User ID: ${currentUserId}`);
+
+    let votedPolls = JSON.parse(localStorage.getItem(`votedPolls_${currentUserId}`)) || [];
+    console.log(`Voted Polls for ${currentUserId}:`, votedPolls);
+
+    function markPollAsVoted(pollId) {
+        if (!votedPolls.includes(pollId)) {
+            votedPolls.push(pollId);
+            localStorage.setItem(`votedPolls_${currentUserId}`, JSON.stringify(votedPolls));
+            console.log(`Poll ${pollId} marked as voted. Updated votedPolls:`, votedPolls);
+        }
+    }
+
+    // --- Admin View Management (for demonstration) ---
+    let isAdminView = localStorage.getItem('isAdminView') === 'true'; // Default to resident view
+    const adminCreateVoteSection = document.getElementById('admin-create-vote-section');
+    const toggleAdminViewButton = document.getElementById('toggle-admin-view');
+
+    function updateViewMode() {
+        if (adminCreateVoteSection) {
+            adminCreateVoteSection.style.display = isAdminView ? 'block' : 'none';
+        }
+        if (toggleAdminViewButton) {
+            toggleAdminViewButton.textContent = isAdminView ? 'Switch to Resident View' : 'Switch to Admin View (Demo)';
+        }
+        loadVotes(); // Reload votes based on the current view mode
+    }
+
+    // --- Poll Queue Management ---
+    let _unvotedPollsQueue = []; // Array to hold polls the user hasn't voted on yet
+
+    function submitVote(voteId, optionId) {
+        console.log(`Submitting vote: ${voteId}, option: ${optionId}`);
+        const formData = new FormData();
+        formData.append('vote_id', voteId);
+        formData.append('option_id', optionId);
+
+        // CORRECTED PATH: Changed to relative path
+        return fetch('submit_vote.php', { 
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+                });
+            }
+            return response.json();
+        });
+    }
+
+    function deleteVote(voteId) {
+        console.log(`Attempting to delete vote with ID: ${voteId}`);
+        const formData = new FormData();
+        formData.append('vote_id', voteId);
+
+        // CORRECTED PATH: Changed to relative path
+        return fetch('delete_vote.php', { // New PHP endpoint for deletion
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+                });
+            }
+            return response.json();
+        });
+    }
+
+function displayPolls(pollsToDisplay) {
+    const votesContainer = document.getElementById('votes-container');
+    if (!votesContainer) {
+        console.error("votes-container not found!");
+        return;
+    }
+
+    if (pollsToDisplay.length === 0) {
+        votesContainer.innerHTML = '<div class="alert alert-info text-center py-4">No active polls available for you to vote on at the moment.</div>';
+        return;
+    }
+
+    const pollsHtml = pollsToDisplay.map(poll => `
+        <div class="card shadow-sm border-0 mb-4 rounded-4" data-vote-id="${poll.id}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title mb-1">${poll.title}</h5>
+                        <small class="text-muted">
+                            Deadline • ${new Date(poll.deadline).toLocaleString()}
+                        </small>
+                    </div>
+                    ${isAdminView ? `<button type="button" class="btn btn-sm btn-danger delete-vote-button" data-vote-id="${poll.id}">
+                        <i class="bi bi-trash"></i> Delete Poll
+                    </button>` : ''}
+                </div>
+                <p class="card-text mt-2">${poll.description || ''}</p>
+                <ul class="list-group list-group-flush mt-3">
+                    ${poll.options.map(opt => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center" data-option-id="${opt.id}">
+                            <span>${opt.name}</span>
+                            <div>
+                                <span class="badge bg-primary rounded-pill me-2">${opt.votes}</span>
+                                <!-- Vote button completely removed for this dashboard -->
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        </div>
+    `).join('');
+    votesContainer.innerHTML = pollsHtml;
+    console.log(`Displayed ${pollsToDisplay.length} poll(s).`);
+}
+
+    function showNextPollForResident() {
+        if (_unvotedPollsQueue.length > 0) {
+            const nextPoll = _unvotedPollsQueue.shift(); // Get and remove the first poll
+            displayPolls([nextPoll]); // Display only this single poll
+        } else {
+            displayPolls([]); // No more polls for the resident
+        }
+    }
+
+    function loadVotes() {
+        console.log("loadVotes() initiated from voting.html partial");
+        const votesContainer = document.getElementById('votes-container');
+        if (!votesContainer) {
+            console.error("votes-container not found in voting.html partial!");
+            return Promise.reject("votes-container not found");
+        }
+
+        votesContainer.innerHTML = `
+            <div class="card shadow-sm border-0 mb-4 rounded-4" id="loading-card">
+                <div class="card-body text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading votes...</p>
+                </div>
+            </div>
+        `;
+
+        // CORRECTED PATH: Changed to relative path
+        return fetch('https://marina-heights.rf.gd/admin/Menus/get_votes.php')
+            .then(response => {
+                console.log("Response from get_votes.php received.");
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Raw votes data successfully parsed:", data);
+                if (!Array.isArray(data)) {
+                    console.error("Expected an array from get_votes.php, but received:", data);
+                    votesContainer.innerHTML = '<div class="alert alert-danger">Invalid data format received from server. Expected an array.</div>';
+                    return; // Stop here if data format is wrong
+                }
+                
+                const now = new Date();
+                const activePolls = data.filter(vote => new Date(vote.deadline) > now);
+
+                if (isAdminView) {
+                    // Admin view: show all active polls, not filtered by voted status, and allow delete
+                    displayPolls(activePolls);
+                } else {
+                    // Resident view: filter out already voted polls and show them one by one
+                    _unvotedPollsQueue = activePolls.filter(vote => !votedPolls.includes(vote.id));
+                    console.log("Filtered unvoted polls queue for resident:", _unvotedPollsQueue);
+                    showNextPollForResident(); // Display the first available poll for resident
+                }
+                
+                return data; // Return data for chaining
+            })
+            .catch(error => {
+                console.error('Error loading votes:', error);
+                votesContainer.innerHTML = `
+                    <div class="alert alert-danger">Error loading votes: ${error.message}</div>
+                `;
+                // Use global notification if available, otherwise log
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification(`Error loading votes: ${error.message}`, 'danger');
+                } else {
+                    console.error("Global showNotification not available when loading votes.");
+                }
+                throw error; // Re-throw for chaining
+            });
+    }
+
+    // This function will be called by the parent resident_dashboard.html script once voting.html's script is loaded.
+    window.initializeVotingPage = function() {
+        console.log("Initializing voting page (from voting.html partial via global call).");
+        setupEventListeners(); // Set up event listeners first
+        updateViewMode(); // Set initial view mode
+    };
+
+    // Event handlers
+    function setupEventListeners() {
+        console.log("Setting up event listeners for voting.html content.");
+        
+        // Toggle Admin View button
+        if (toggleAdminViewButton) {
+            toggleAdminViewButton.addEventListener('click', function() {
+                isAdminView = !isAdminView;
+                localStorage.setItem('isAdminView', isAdminView);
+                updateViewMode();
+            });
+        }
+
+        // Use event delegation for dynamically added elements
+        document.addEventListener('click', function(e) {
+            // Add option button for new vote form
+            if (e.target.id === 'add-option') {
+                const optionsContainer = document.getElementById('options-container');
+                const newOption = document.createElement('div');
+                newOption.className = 'row g-2 mb-2';
+                // Generate a unique ID for the new option input
+                const newOptionId = `optionInput${optionsContainer.children.length + 1}`; 
+                newOption.innerHTML = `
+                    <div class="col-md-10">
+                        <input type="text" id="${newOptionId}" name="option[]" class="form-control" placeholder="New option" required aria-label="New option">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-option">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                optionsContainer.appendChild(newOption);
+                console.log("New option added.");
+            }
+            
+            // Remove option button for new vote form
+            if (e.target.classList.contains('remove-option') || e.target.closest('.remove-option')) {
+                e.target.closest('.row').remove();
+                console.log("Option removed.");
+            }
+            
+            // Vote button for existing polls (only visible in resident view)
+            if (e.target.classList.contains('vote-button') || e.target.closest('.vote-button')) {
+                const button = e.target.closest('.vote-button');
+                const voteId = button.dataset.voteId;
+                const optionId = button.dataset.optionId;
+
+                button.disabled = true;
+                button.textContent = 'Voting...';
+                console.log(`Vote button clicked for voteId: ${voteId}, optionId: ${optionId}`);
+
+                submitVote(voteId, optionId)
+                    .then(response => {
+                        if (response.success) {
+                            if (typeof window.showNotification === 'function') {
+                                window.showNotification('Your vote has been cast successfully!', 'success'); // Use global notification
+                            } else {
+                                console.warn("Global showNotification not available after vote submission.");
+                            }
+                            markPollAsVoted(voteId); // Mark this poll as voted
+                            showNextPollForResident(); // Show the next poll
+                        } else {
+                            if (typeof window.showNotification === 'function') {
+                                window.showNotification(response.error || 'Failed to cast vote.', 'danger'); // Use global notification
+                            } else {
+                                console.warn("Global showNotification not available for vote submission error.");
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting vote:', error);
+                        if (typeof window.showNotification === 'function') {
+                            window.showNotification('Error submitting vote: ' + error.message, 'danger'); // Use global notification
+                        } else {
+                            console.warn("Global showNotification not available for vote submission catch error.");
+                        }
+                    })
+                    .finally(() => {
+                        button.disabled = false;
+                        button.textContent = 'Vote';
+                    });
+            }
+
+            // Delete Poll button for existing polls (only visible in admin view)
+            if (e.target.classList.contains('delete-vote-button') || e.target.closest('.delete-vote-button')) {
+                const button = e.target.closest('.delete-vote-button');
+                const voteId = button.dataset.voteId;
+                console.log(`Delete poll button clicked for voteId: ${voteId}`);
+                
+                // Use the showConfirmModal function from parent (assuming it's globally available)
+                if (typeof window.showConfirmModal === 'function') {
+                    window.showConfirmModal(`Are you sure you want to delete this poll? This action cannot be undone.`, () => {
+                        button.disabled = true;
+                        button.textContent = 'Deleting...';
+                        deleteVote(voteId)
+                            .then(response => {
+                                if (response.success) {
+                                    if (typeof window.showNotification === 'function') {
+                                        window.showNotification('Poll deleted successfully!', 'success'); // Use global notification
+                                    } else {
+                                        console.warn("Global showNotification not available after poll deletion.");
+                                    }
+                                    // Remove the deleted poll from the queue and display next
+                                    _unvotedPollsQueue = _unvotedPollsQueue.filter(poll => poll.id !== voteId); // Update resident queue too
+                                    loadVotes(); // Reload all votes for admin view
+                                } else {
+                                    if (typeof window.showNotification === 'function') {
+                                        window.showNotification(response.error || 'Failed to delete poll.', 'danger'); // Use global notification
+                                    } else {
+                                        console.warn("Global showNotification not available for poll deletion error.");
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error deleting poll:', error);
+                                if (typeof window.showNotification === 'function') {
+                                    window.showNotification('Error deleting poll: ' + error.message, 'danger'); // Use global notification
+                                } else {
+                                    console.warn("Global showNotification not available for poll deletion catch error.");
+                                }
+                            })
+                            .finally(() => {
+                                button.disabled = false;
+                                button.innerHTML = '<i class="bi bi-trash"></i> Delete Poll'; // Restore button HTML
+                            });
+                    });
+                } else {
+                    console.warn("window.showConfirmModal is not available. Using native confirm().");
+                    if (confirm(`Are you sure you want to delete this poll? This action cannot be undone.`)) {
+                        button.disabled = true;
+                        button.textContent = 'Deleting...';
+                        deleteVote(voteId)
+                            .then(response => {
+                                if (response.success) {
+                                    if (typeof window.showNotification === 'function') {
+                                        window.showNotification('Poll deleted successfully!', 'success'); // Use global notification
+                                    } else {
+                                        console.warn("Global showNotification not available (fallback).");
+                                    }
+                                    _unvotedPollsQueue = _unvotedPollsQueue.filter(poll => poll.id !== voteId);
+                                    loadVotes(); // Reload all votes for admin view
+                                } else {
+                                    if (typeof window.showNotification === 'function') {
+                                        window.showNotification(response.error || 'Failed to delete poll.', 'danger'); // Use global notification
+                                    } else {
+                                        console.warn("Global showNotification not available for fallback deletion error.");
+                                    }
+                                }
+                            })
+                            .finally(() => {
+                                button.disabled = false;
+                                button.innerHTML = '<i class="bi bi-trash"></i> Delete Poll'; // Restore button HTML
+                            });
+                    }
+                }
+            }
+        });
+
+        // Form submission for new vote creation - ATTACH DIRECTLY TO THE FORM
+        const voteForm = document.getElementById('voteForm');
+        if (voteForm) {
+            // Remove existing listener to prevent duplicates if initializeVotingPage is called multiple times
+            if (voteForm._submitListener) { // Use a custom property to store the listener reference
+                voteForm.removeEventListener('submit', voteForm._submitListener);
+            }
+
+            const newSubmitListener = function(e) {
+                e.preventDefault();
+                console.log("Vote form submitted.");
+                const voteDeadlineInput = document.getElementById('voteDeadline');
+                const deadline = new Date(voteDeadlineInput.value);
+                const now = new Date();
+
+                // Check if the deadline is in the past
+                if (deadline <= now) {
+                    // Use global showNotification
+                    if (typeof window.showNotification === 'function') {
+                        window.showNotification('The voting deadline must be in the future!', 'warning');
+                    } else {
+                        console.warn("Global showNotification not available to show deadline warning.");
+                        alert('The voting deadline must be in the future!'); // Fallback for critical error
+                    }
+                    return; // Prevent form submission
+                }
+
+                const formData = new FormData(e.target);
+                
+                // CORRECTED PATH: Changed to relative path
+                fetch('/admin/Menus/get_votes.php', { 
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Use global showNotification
+                        if (typeof window.showNotification === 'function') {
+                            window.showNotification('Vote created successfully!', 'success'); 
+                        } else {
+                            console.warn("Global showNotification not available after vote creation.");
+                        }
+                        e.target.reset();
+                        // Reset options container to default "Yes/No"
+                        const optionsContainer = document.getElementById('options-container');
+                        optionsContainer.innerHTML = `
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-10">
+                                    <input type="text" id="optionInput1" name="option[]" class="form-control" value="Yes" required aria-label="Option 1">
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-10">
+                                    <input type="text" id="optionInput2" name="option[]" class="form-control" value="No" required aria-label="Option 2">
+                                </div>
+                            </div>
+                        `;
+                        return loadVotes(); // Reload votes to show the new one (if it's not expired and not voted by current user)
+                    } else {
+                        throw new Error(data.error || 'Error creating vote');
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error during vote creation:', error);
+                    // Use global showNotification
+                    if (typeof window.showNotification === 'function') {
+                        window.showNotification('Error creating vote: ' + error.message, 'danger'); 
+                    } else {
+                        console.warn("Global showNotification not available for vote creation catch error.");
+                    }
+                });
+            };
+
+            voteForm.addEventListener('submit', newSubmitListener);
+            voteForm._submitListener = newSubmitListener; // Store reference for removal
+        } else {
+            console.error("Vote form #voteForm not found during setupEventListeners.");
+        }
+    }
+</script>
+
+
+
+
+

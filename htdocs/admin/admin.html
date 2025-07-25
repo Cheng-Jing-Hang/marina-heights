@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css?v=202507220210" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css?v=202507220210" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/all_residents.css">
+  <!-- Corrected path for noticeboard.css -->
+  <link rel="stylesheet" href="/admin/noticeboard.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <style>
+    .today-highlight {
+        background-color: #3b82f6;
+        color: white;
+        font-weight: bold;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #calendar-body td {
+        height: 40px;
+        width: 40px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    #calendar table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 4px;
+    }
+</style>
+</head>
+<body>
+  <!-- Global Notification Alert - Moved here to be persistent across pages -->
+  <div id="notification" class="alert alert-dismissible shadow" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 1050; display: none; min-width: 250px;">
+      <span id="notification-message"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close notification"></button>
+  </div>
+
+  <!-- Global Success Modal -->
+  <div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header bg-success-subtle text-success rounded-top-4">
+          <h5 class="modal-title d-flex align-items-center">
+            <i class="bi bi-check-circle-fill me-2"></i> Success
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close success message"></button>
+        </div>
+        <div class="modal-body text-secondary fs-6" id="successMessage">
+          <!-- Message inserted by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Confirm Modal -->
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 shadow-sm">
+      <div class="modal-body text-center p-4">
+        <div class="display-5 text-danger mb-3">
+          <i class="bi bi-exclamation-circle-fill"></i>
+        </div>
+        <h5 class="mb-3 fw-semibold">Are you sure you want to delete this?</h5>
+        <div class="d-flex justify-content-center gap-3">
+          <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="confirmDeleteBtn" class="btn btn-danger rounded-pill px-4">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Global Event Detail Modal -->
+  <div class="modal fade" id="eventDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-calendar-event me-2"></i>Schedule Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close event details"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Title:</strong> <span id="evtTitle"></span></p>
+          <p><strong>Description:</strong> <span id="evtDesc"></span></p>
+          <p><strong>Date:</strong> <span id="evtDate"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-warning" id="evtEdit"><i class="bi bi-pencil-square"></i> Edit</button>
+          <button type="button" class="btn btn-danger"  id="evtDelete"><i class="bi bi-trash"></i> Delete</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="sidebar">
+    <h4>Marina Heights Admin</h4>
+    <a href="/admin/admin.html" class="sidebar-link"><i class="bi bi-house-door-fill"></i> <span class="link-text">Dashboard</span></a> <!-- Corrected Dashboard link -->
+
+    <div class="accordion" id="sidebarMenu">
+      <!-- Management Section -->
+      <div class="accordion-item bg-transparent border-0">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-transparent text-white" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#collapseManagement"
+                  aria-expanded="false" aria-controls="collapseManagement">
+            <i class="bi bi-folder"></i>
+            <span class="link-text">Management</span>
+          </button>
+        </h2>
+        <div id="collapseManagement" class="accordion-collapse collapse" data-bs-parent="#sidebarMenu">
+          <div class="accordion-body ps-5">
+            <a href="/admin/Menus/noticeboard.php" class="sidebar-link text-white d-block">Notice Board</a>
+            <a href="/admin/Menus/reports.php" class="sidebar-link text-white d-block">Reports</a>
+            <a href="/admin/Menus/facility_bookings.php" class="sidebar-link text-white d-block">Facility Bookings</a>
+            <a href="/admin/Menus/maintenance_fee.php" class="sidebar-link text-white d-block">Management Fees</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visitor Section -->
+      <div class="sidebar-section"><span class="section-label">Visitor</span></div>
+      <div class="accordion-item bg-transparent border-0">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-transparent text-white" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#collapseVisitor"
+                  aria-expanded="false" aria-controls="collapseVisitor">
+            <i class="bi bi-person-fill"></i>
+            <span class="link-text">Visitor Users</span>
+          </button>
+        </h2>
+        <div id="collapseVisitor" class="accordion-collapse collapse" data-bs-parent="#sidebarMenu">
+          <div class="accordion-body ps-5">
+            <a href="Menus/all_visitors.php" class="sidebar-link text-white d-block">All Visitors</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resident Section -->
+      <div class="sidebar-section"><span class="section-label">Resident</span></div>
+      <div class="accordion-item bg-transparent border-0">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-transparent text-white" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#collapseResident"
+                  aria-expanded="false" aria-controls="collapseResident">
+            <i class="bi bi-person-fill"></i>
+            <span class="link-text">Resident Users</span>
+          </button>
+        </h2>
+        <div id="collapseResident" class="accordion-collapse collapse" data-bs-parent="#sidebarMenu">
+          <div class="accordion-body ps-5">
+            <a href="Menus/all_residents.php" class="sidebar-link text-white d-block">All Residents</a>
+          </div>
+        </div>
+      </div>
+    
+    </div>
+  </div>
+<!------------------------- MAIN CONTENT --------------------------------------------> 
+  <div class="main-content" id="mainContent">
+    <div class="container-fluid position-relative">
+      <img src="https://undraw.co/api/illustrations/48ab7346-e924-4d41-8a49-9aa4d5a54c79" alt="Decoration" class="dashboard-illustration">
+
+      <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+          <h2 class="fw-bold text-dark">Hello👋</h2>
+          <p class="text-muted">Welcome back! Here's what’s happening in your condo today.</p>
+        </div>
+      </div>
+
+      <!-- Dashboard Cards with Animated Counters -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow border-0 h-100">
+      <div class="card-body d-flex flex-column align-items-start">
+        <h6 class="text-muted">Total Residents</h6>
+        <h3 id="totalResidents" class="fw-bold text-primary counter">0</h3>
+        <i class="bi bi-people-fill fs-2 text-primary mt-auto"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow border-0 h-100">
+      <div class="card-body d-flex flex-column align-items-start">
+        <h6 class="text-muted">Pending Visitor Requests</h6>
+        <h3 id="pendingVisitorsCount" class="fw-bold text-warning counter">0</h3>
+        <i class="bi bi-person-check-fill fs-2 text-warning mt-auto"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow border-0 h-100">
+      <div class="card-body d-flex flex-column align-items-start">
+        <h6 class="text-muted">Pending Reports</h6>
+        <h3 id="openReports" class="fw-bold text-danger counter">0</h3>
+        <i class="bi bi-exclamation-triangle-fill fs-2 text-danger mt-auto"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar and Notices -->
+<div class="row g-4">
+  <!-- Notice Board Column - Now comes first (left) -->
+  <div class="col-md-6">
+    <div class="card shadow border-0 h-100">
+      <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-dark"><i class="bi bi-megaphone-fill me-2"></i>Latest Notices</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush" id="latest-notices">
+            <li class="list-group-item text-muted">No notices posted yet.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Column - Now on the right -->
+<div class="col-md-6">
+  <div class="card shadow border-0 h-100">
+    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+      <h5 class="mb-0 text-dark">
+        <i class="bi bi-calendar-event-fill me-2"></i>Condo Calendar
+      </h5>
+    </div>
+    <div class="card-body bg-white">
+      <h3 id="calendar-title" class="text-center text-primary mb-4">📅 July 2024</h3>
+      <table class="table table-bordered text-center mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Sun</th>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th>Sat</th>
+          </tr>
+        </thead>
+        <tbody id="calendar-body">
+          <tr>
+            <td class="text-muted">30</td>
+            <td>1</td>
+            <td>2</td>
+            <td>3</td>
+            <td>4</td>
+            <td>5</td>
+            <td>6</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>8</td>
+            <td>9</td>
+            <td>10</td>
+            <td>11</td>
+            <td>12</td>
+            <td class="bg-primary text-white fw-bold rounded-circle">13</td>
+          </tr>
+          <tr>
+            <td>14</td>
+            <td>15</td>
+            <td>16</td>
+            <td>17</td>
+            <td>18</td>
+            <td>19</td>
+            <td>20</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+  <script src="calendar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js?v=202507220210"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+  <!-- ================= MAIN SPA & CALENDAR JS ================= -->
+<script>
+    document.addEventListener('click', function (e) {
+  console.log('Clicked target:', e.target, 'closest btn:', e.target.closest('.btn-approve, .btn-delete'));
+});
+
+const mainContent = document.getElementById('mainContent');
+let currentPage = '';
+
+// Show Notification
+window.showNotification = function (message, type) {
+  let attempts = 0;
+  const maxAttempts = 20;
+  const interval = 50;
+
+  function tryShow() {
+    const notificationElement = document.getElementById('notification');
+    const notificationMessageElement = document.getElementById('notification-message');
+    if (notificationElement && notificationMessageElement) {
+      notificationElement.className = `alert alert-${type} alert-dismissible shadow`;
+      notificationMessageElement.textContent = message;
+      notificationElement.style.display = 'block';
+      setTimeout(() => {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+          const bsAlert = bootstrap.Alert.getInstance(notificationElement) || new bootstrap.Alert(notificationElement);
+          bsAlert.close();
+        } else {
+          notificationElement.style.display = 'none';
+        }
+      }, 5000);
+    } else if (attempts < maxAttempts) {
+      attempts++;
+      setTimeout(tryShow, interval);
+    } else {
+      console.log(`Fallback notification: ${message}`);
+    }
+  }
+  tryShow();
+};
+
+// Success Modal
+window.showSuccess = function (message) {
+  setTimeout(() => {
+    const modal = new bootstrap.Modal('#successModal');
+    document.getElementById('successMessage').textContent = message;
+    modal.show();
+  }, 10);
+};
+
+// Confirm Modal
+window.showConfirmModal = function (msg, onYes) {
+  setTimeout(() => {
+    if (!document.getElementById('confirmModal')) {
+      document.body.insertAdjacentHTML('beforeend', `
+        <div class="modal fade" id="confirmModal" tabindex="-1">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title text-warning"><i class="bi bi-exclamation-triangle me-2"></i>Confirm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close confirmation dialog"></button>
+              </div>
+              <div class="modal-body" id="confirmMsg"></div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmYes">Yes</button>
+              </div>
+            </div>
+          </div>
+        </div>`);
+    }
+    const modalElement = document.getElementById('confirmModal');
+    const modalInstance = new bootstrap.Modal(modalElement);
+    document.getElementById('confirmMsg').textContent = msg;
+    const yesBtn = document.getElementById('confirmYes');
+    yesBtn.replaceWith(yesBtn.cloneNode(true));
+    const newYesBtn = document.getElementById('confirmYes');
+    newYesBtn.addEventListener('click', async () => {
+      document.activeElement?.blur();
+      if (onYes) await Promise.resolve(onYes());
+      modalInstance.hide();
+    }, { once: true });
+    modalInstance.show();
+  }, 10);
+};
+
+// Calendar Initialization
+function initMaintenanceCalendar(el) {
+  if (!el) return;
+  if (el._fullCalendarInstance) {
+    el._fullCalendarInstance.destroy();
+    el._fullCalendarInstance = null;
+  }
+  const calendar = new FullCalendar.Calendar(el, {
+    initialView: 'dayGridMonth',
+    initialDate: new Date().toISOString().slice(0, 10),
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    events: [],
+    dateClick(info) {
+      alert('Clicked on date: ' + info.dateStr);
+    }
+  });
+  calendar.render();
+  el._fullCalendarInstance = calendar;
+}
+
+// Animate counter
+function animateCounter(element, target) {
+  if (!element) return;
+  let current = 0;
+  const step = Math.ceil(target / 60);
+  function update() {
+    current += step;
+    if (current >= target) {
+      element.textContent = target;
+    } else {
+      element.textContent = current;
+      requestAnimationFrame(update);
+    }
+  }
+  update();
+}
+
+// Load Dashboard Counters
+function loadDashboardCounters() {
+  fetch('Menus/admin_counts.php')
+    .then(response => response.json())
+    .then(data => {
+      animateCounter(document.getElementById('totalResidents'), data.residents);
+      animateCounter(document.getElementById('pendingVisitorsCount'), data.pending_visitors);
+      animateCounter(document.getElementById('openReports'), data.open_reports);
+    })
+    .catch(err => console.error('Error loading dashboard counters:', err));
+}
+
+// Load Latest Notices
+function loadLatestNotices() {
+  fetch('Menus/latest_notice.php')
+    .then(response => response.json())
+    .then(data => {
+      const list = document.getElementById('latest-notices');
+      if (!list) return;
+      list.innerHTML = '';
+      if (!data.length) {
+        list.innerHTML = '<li class="list-group-item text-muted">No notices posted yet.</li>';
+        return;
+      }
+      data.forEach(title => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = title;
+        list.appendChild(li);
+      });
+    })
+    .catch(() => {
+      const list = document.getElementById('latest-notices');
+      if (list) list.innerHTML = '<li class="list-group-item text-danger">Error loading notices.</li>';
+    });
+}
+
+// SPA Page Loader
+function loadPage(url) {
+  if (url === currentPage) {
+    console.log(`Page ${url} already loaded; skipping.`);
+    return;
+  }
+  currentPage = url;
+  fetch(url)
+    .then(r => {
+      if (!r.ok) {
+        return r.text().then(text => Promise.reject(`HTTP ${r.status}: ${text || 'Unknown error'}`));
+      }
+      return r.text();
+    })
+    .then(html => {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const scriptsToExecute = [];
+      const scriptElements = Array.from(tempDiv.querySelectorAll('script'));
+
+      scriptElements.forEach(oldScript => {
+        const isExternal = oldScript.src;
+        const skip = isExternal && (
+          oldScript.src.includes('bootstrap.bundle.min.js') ||
+          oldScript.src.includes('fullcalendar@6.1.8')
+        );
+        if (!skip) {
+          scriptsToExecute.push({
+            src: oldScript.src,
+            textContent: oldScript.textContent,
+            attributes: Array.from(oldScript.attributes).map(attr => ({ name: attr.name, value: attr.value }))
+          });
+        }
+        oldScript.remove();
+      });
+
+      mainContent.innerHTML = '';
+      while (tempDiv.firstChild) {
+        mainContent.appendChild(tempDiv.firstChild);
+      }
+
+      document.querySelectorAll('script[data-spa-script]').forEach(s => s.remove());
+
+      let scriptsLoadedCount = 0;
+      const totalScripts = scriptsToExecute.length;
+
+      const checkAndInitialize = () => {
+        if (scriptsLoadedCount === totalScripts) {
+          const calDiv = mainContent.querySelector('#dashboard-calendar');
+          if (calDiv) initMaintenanceCalendar(calDiv);
+          loadDashboardCounters();
+          loadLatestNotices();
+        }
+      };
+
+      scriptsToExecute.forEach((scriptData, index) => {
+        const newScript = document.createElement('script');
+        scriptData.attributes.forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        newScript.dataset.spaScript = 'true';
+        if (scriptData.src) {
+          newScript.src = scriptData.src;
+          newScript.onload = () => {
+            console.log(`External script loaded successfully from partial: ${newScript.src}`);
+            scriptsLoadedCount++;
+            checkAndInitialize();
+          };
+          newScript.onerror = () => {
+            console.error(`Failed to load external script from partial: ${newScript.src}`);
+            scriptsLoadedCount++;
+            checkAndInitialize();
+          };
+          document.body.appendChild(newScript);
+        } else {
+          newScript.textContent = scriptData.textContent;
+          document.body.appendChild(newScript);
+          scriptsLoadedCount++;
+          checkAndInitialize();
+          console.log(`Appended inline script [${index}]`);
+        }
+      });
+
+      if (totalScripts === 0) checkAndInitialize();
+    })
+    .catch(error => {
+      console.error("Failed to load page:", error);
+      if (typeof window.showNotification === 'function') {
+        window.showNotification(`Failed to load page: ${error.message || error}`, 'danger');
+      } else {
+        mainContent.innerHTML = `<p class="text-danger">Failed to load page. Error: ${error}</p>`;
+      }
+    });
+}
+
+// Sidebar Links
+document.querySelectorAll('.sidebar-link').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const href = a.getAttribute('href');
+    if (href && href !== '#') loadPage(href);
+  });
+});
+
+// Auto-collapse sidebar submenu on mouse leave
+(() => {
+  const sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  sidebar.addEventListener('mouseleave', () => {
+    sidebar.querySelectorAll('.accordion-collapse.show').forEach(sub => {
+      const instance = bootstrap.Collapse.getInstance(sub);
+      if (instance) instance.hide();
+    });
+  });
+})();
+
+// Existing SPA loader, sidebar links, etc...
+
+// DELETE Resident Handler
+document.addEventListener('click', function (e) {
+  const target = e.target.closest('.btn-delete');
+  if (target) {
+    const deleteRow = target.closest('tr');
+    const id = deleteRow?.dataset.id;
+    if (!id) return;
+
+    showConfirmModal('Are you sure you want to delete this resident?', () => {
+      return fetch('Menus/delete_resident.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'id=' + encodeURIComponent(id)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          deleteRow.remove();
+          showSuccess('Resident Deleted');
+        } else {
+          showNotification(data.error || 'Delete failed.', 'danger');
+        }
+      });
+    });
+  }
+});
+
+// APPROVE Resident Handler
+document.addEventListener('click', function (e) {
+  const target = e.target.closest('.btn-approve');
+  if (target) {
+    const row = target.closest('tr');
+    const id = row?.dataset.id;
+    if (!id) return;
+
+    fetch('Menus/approve_resident.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'id=' + encodeURIComponent(id)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        row.remove();
+        showSuccess('Resident Approved — Email sent.');
+      } else {
+        showNotification(data.error || 'Approval failed.', 'danger');
+      }
+    });
+  }
+});
+
+// Init dashboard on load
+document.addEventListener('DOMContentLoaded', () => {
+  const calEl = document.getElementById('dashboard-calendar');
+  if (calEl) initMaintenanceCalendar(calEl);
+  loadDashboardCounters();
+  loadLatestNotices();
+});
+
+</script>
+</body>
+</html>

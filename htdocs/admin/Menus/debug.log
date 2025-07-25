@@ -1,0 +1,48 @@
+Array
+(
+    [timestamp] => 2025-07-20 06:20:07
+    [method] => GET
+    [post_data] => Array
+        (
+        )
+
+    [files] => Array
+        (
+        )
+
+)
+Array
+(
+    [timestamp] => 2025-07-20 06:23:46
+    [method] => GET
+    [post_data] => Array
+        (
+        )
+
+    [files] => Array
+        (
+        )
+
+)
+Method: GET
+FAILED: Expected POST
+=== NEW REQUEST ===
+Time: 2025-07-20 06:36:22
+Method: GET
+ERROR: Expected POST request
+=== NEW REQUEST ===
+Time: 2025-07-20 06:39:48
+Method: GET
+ERROR: Expected POST request
+=== NEW REQUEST ===
+Time: 2025-07-20 06:39:50
+Method: GET
+ERROR: Expected POST request
+=== NEW REQUEST ===
+Time: 2025-07-20 06:39:51
+Method: GET
+ERROR: Expected POST request
+=== NEW REQUEST ===
+Time: 2025-07-20 06:39:52
+Method: GET
+ERROR: Expected POST request

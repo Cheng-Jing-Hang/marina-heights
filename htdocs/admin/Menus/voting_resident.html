@@ -1,0 +1,336 @@
+<div class="container-fluid py-4">
+    <!-- Page Heading -->
+    <h2 class="mb-4 fw-bold text-primary">
+        <i class="bi bi-ballot-check me-2"></i> Resident Voting Polls
+    </h2>
+
+    <!-- Active Votes Section -->
+    <h5 class="text-muted mb-3">Your Active Polls</h5>
+
+    <!-- Votes will be loaded here dynamically -->
+    <div id="votes-container" class="space-y-4">
+        <!-- Loading card initially, will be replaced by real data -->
+        <div class="card shadow-sm border-0 mb-4 rounded-4" id="loading-card">
+            <div class="card-body text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading polls...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+    }
+    .list-group-item {
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        transition: background-color 0.2s ease;
+    }
+    .list-group-item:hover {
+        background-color: #e2e6ea;
+    }
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+        transform: translateY(-1px);
+    }
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    .btn-info:hover {
+        background-color: #138496;
+        border-color: #117a8b;
+        transform: translateY(-1px);
+    }
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.8em;
+        border-radius: 1rem;
+        background-color: #6c757d;
+    }
+    .text-success {
+        color: #28a745 !important;
+    }
+</style>
+
+<script>
+(function() {
+    // User ID and voted polls management
+    var currentUserId;
+    if (!window.currentUserId) {
+        currentUserId = localStorage.getItem('currentUserId');
+        if (!currentUserId) {
+            currentUserId = 'user_' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('currentUserId', currentUserId);
+        }
+        window.currentUserId = currentUserId;
+    } else {
+        currentUserId = window.currentUserId;
+    }
+
+    let votedPolls = JSON.parse(localStorage.getItem(`votedPolls_${currentUserId}`)) || [];
+
+function markPollAsVoted(pollId) {
+    if (!votedPolls.includes(pollId)) {
+        votedPolls.push(pollId);
+        localStorage.setItem(`votedPolls_${currentUserId}`, JSON.stringify(votedPolls));
+    }
+}
+
+    let _unvotedPollsQueue = [];
+
+    function submitVote(voteId, optionId) {
+        const formData = new FormData();
+        formData.append('vote_id', voteId);
+        formData.append('option_id', optionId);
+
+        return fetch('./submit_vote.php', { 
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+                });
+            }
+            return response.json();
+        });
+    }
+
+    function showResults(pollId) {
+        const pollCard = document.querySelector(`.card[data-vote-id="${pollId}"]`);
+        if (!pollCard) return;
+
+        const poll = JSON.parse(localStorage.getItem(`poll_${pollId}`));
+        if (!poll) return;
+
+        const optionsList = pollCard.querySelector('.list-group');
+        if (optionsList) {
+            optionsList.innerHTML = poll.options.map(opt => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${opt.name}</span>
+                    <span class="badge bg-primary rounded-pill">${opt.votes} votes</span>
+                </li>
+            `).join('');
+        }
+        const checkResultsBtn = pollCard.querySelector('.check-results-button');
+        if (checkResultsBtn) {
+            checkResultsBtn.style.display = 'none';
+        }
+    }
+
+function displayPoll(poll) {
+    // Always reload votedPolls from localStorage before rendering
+    votedPolls = JSON.parse(localStorage.getItem(`votedPolls_${currentUserId}`)) || [];
+
+    const votesContainer = document.getElementById('votes-container');
+    if (!poll) {
+        votesContainer.innerHTML = '<div class="alert alert-info text-center py-4">No active polls available for you to vote on at the moment.</div>';
+        return;
+    }
+
+    const deadlinePassed = new Date(poll.deadline) <= new Date();
+    const hasVoted = votedPolls.includes(poll.id);
+
+    localStorage.setItem(`poll_${poll.id}`, JSON.stringify(poll));
+
+    votesContainer.innerHTML = `
+        <div class="card shadow-sm border-0 mb-4 rounded-4" data-vote-id="${poll.id}">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="card-title fw-bold text-dark mb-1">${poll.title}</h5>
+                        <small class="text-muted">
+                            Deadline • ${new Date(poll.deadline).toLocaleString()}
+                        </small>
+                    </div>
+                </div>
+                <p class="card-text text-secondary mb-3">${poll.description || 'No description provided.'}</p>
+                <ul class="list-group list-group-flush mt-3">
+                    ${poll.options.map(opt => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center" data-option-id="${opt.id}">
+                            <span>${opt.name}</span>
+                            <div>
+                                ${deadlinePassed ? 
+                                    `<span class="badge bg-secondary rounded-pill me-2" style="display: none;" data-vote-count="${opt.id}">${opt.votes} votes</span>` 
+                                    : ''
+                                }
+                                ${!deadlinePassed && !hasVoted ? 
+                                    `<button type="button" class="btn btn-sm btn-success vote-button" 
+                                            data-vote-id="${poll.id}" data-option-id="${opt.id}">
+                                        Vote
+                                    </button>` 
+                                    : ''
+                                }
+                            </div>
+                        </li>
+                    `).join('')}
+                </ul>
+                ${deadlinePassed ? `
+                    <div class="mt-4 text-center">
+                        <button type="button" class="btn btn-info check-results-button" data-vote-id="${poll.id}">
+                            Check Results
+                        </button>
+                    </div>
+                ` : (hasVoted ? `<p class="text-success mt-4 text-center fw-semibold">You have already voted on this poll.</p>` : '')}
+            </div>
+        </div>
+    `;
+
+    if (deadlinePassed && hasVoted) {
+        showResults(poll.id);
+    }
+}
+
+function showNextPollForResident() {
+    // Always reload votedPolls from localStorage before filtering
+    votedPolls = JSON.parse(localStorage.getItem(`votedPolls_${currentUserId}`)) || [];
+    if (_unvotedPollsQueue.length > 0) {
+        // Only show polls the user hasn't voted for
+        while (_unvotedPollsQueue.length > 0) {
+            const nextPoll = _unvotedPollsQueue.shift();
+            if (!votedPolls.includes(nextPoll.id)) {
+                displayPoll(nextPoll);
+                return;
+            }
+        }
+    }
+    displayPoll(null);
+}
+
+    function loadVotes() {
+        const votesContainer = document.getElementById('votes-container');
+        votesContainer.innerHTML = `
+            <div class="card shadow-sm border-0 mb-4 rounded-4" id="loading-card">
+                <div class="card-body text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading polls...</p>
+                </div>
+            </div>
+        `;
+
+        return fetch('./get_votes.php')
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status} - ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                const now = new Date();
+                const activePolls = data.filter(vote => new Date(vote.deadline) > now)
+                                        .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+                const pastPolls = data.filter(vote => new Date(vote.deadline) <= now)
+                                    .sort((a, b) => new Date(b.deadline) - new Date(a.deadline));
+                _unvotedPollsQueue = activePolls.filter(vote => !votedPolls.includes(vote.id));
+                if (_unvotedPollsQueue.length > 0) {
+                    showNextPollForResident();
+                } else if (pastPolls.length > 0) {
+                    displayPoll(pastPolls[0]);
+                } else {
+                    displayPoll(null);
+                }
+                return data;
+            })
+            .catch(error => {
+                votesContainer.innerHTML = `
+                    <div class="alert alert-danger">Error loading polls: ${error.message}</div>
+                `;
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification(`Error loading polls: ${error.message}`, 'danger');
+                }
+                throw error;
+            });
+    }
+
+window.initializeVotingPage = function() {
+    // Always reload votedPolls from localStorage
+    votedPolls = JSON.parse(localStorage.getItem(`votedPolls_${currentUserId}`)) || [];
+    setupEventListeners();
+    loadVotes();
+};
+
+    function setupEventListeners() {
+        document.addEventListener('click', function(e) {
+            // Vote button
+            if (e.target.classList.contains('vote-button') || e.target.closest('.vote-button')) {
+                const button = e.target.closest('.vote-button');
+                const voteId = button.dataset.voteId;
+                const optionId = button.dataset.optionId;
+
+                // Prevent voting again if already voted
+                if (votedPolls.includes(voteId)) {
+                    if (typeof window.showNotification === 'function') {
+                        window.showNotification('You have already voted on this poll.', 'warning');
+                    }
+                    return;
+                }
+
+                button.disabled = true;
+                button.textContent = 'Voting...';
+
+                submitVote(voteId, optionId)
+                    .then(response => {
+                        if (response.success) {
+                            if (typeof window.showNotification === 'function') {
+                                window.showNotification('Your vote has been cast successfully!', 'success');
+                            }
+                            markPollAsVoted(voteId);
+                            showNextPollForResident();
+                        } else {
+                            if (typeof window.showNotification === 'function') {
+                                window.showNotification(response.error || 'Failed to cast vote.', 'danger');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        if (typeof window.showNotification === 'function') {
+                            window.showNotification('Error submitting vote: ' + error.message, 'danger');
+                        }
+                    })
+                    .finally(() => {
+                        button.disabled = false;
+                        button.textContent = 'Vote';
+                    });
+            }
+
+            // Check Results button
+            if (e.target.classList.contains('check-results-button') || e.target.closest('.check-results-button')) {
+                const button = e.target.closest('.check-results-button');
+                const pollId = button.dataset.voteId;
+                showResults(pollId);
+            }
+        });
+    }
+})();
+</script>
